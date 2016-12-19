@@ -1,0 +1,7 @@
+
+# Binary
+CPPGP
+
+# Compilation byproducts
+*.o
+*.d
