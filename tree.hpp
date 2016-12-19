@@ -52,10 +52,10 @@ class Tree
                 std::vector<std::shared_ptr<Tree<T>>> children)
             : node(node), children(children) {}
 
-        std::shared_ptr<T> & get_node() const { return node; }
-        std::vector<std::shared_ptr<Tree<T>>> & get_children() const
+        const std::shared_ptr<T> & get_node() const { return node; }
+        const std::vector<std::shared_ptr<Tree<T>>> & get_children() const
         { return children; }
-        std::shared_ptr<T> & get_subtree(pos &position)
+        std::shared_ptr<Tree<T>> get_subtree(pos &position)
         {
             unsigned int i = position.front();
             if(position.size() == 1)
