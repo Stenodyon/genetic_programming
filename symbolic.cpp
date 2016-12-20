@@ -9,6 +9,8 @@
 const double target_fitness = 0.999;
 const unsigned int population_size = 100;
 
+enum class unit { unit };
+
 enum class sym_t
 {
     x,
@@ -46,7 +48,7 @@ class Symbol
         }
 };
 
-tree_ptr<Symbol> random_tree()
+tree_ptr<Symbol,unit> random_tree()
 {
     static std::random_device rd;
     static std::mt19937 gen(rd());
@@ -54,29 +56,32 @@ tree_ptr<Symbol> random_tree()
     double random = dis(gen);
     if(random < 0.3)
     {
-        auto x = std::make_shared<Symbol>(sym_t::x);
-        return std::make_shared<Tree<Symbol>>(x);
+        return std::make_shared<Tree<Symbol,unit>>(
+                Symbol(sym_t::x),
+                unit::unit);
     }
     else if(random < 0.6)
     {
         auto child1 = random_tree();
         auto child2 = random_tree();
-        auto plus = std::make_shared<Symbol>(sym_t::plus);
-        auto tree = std::make_shared<Tree<Symbol>>(plus);
+        auto tree = std::make_shared<Tree<Symbol,unit>>(
+                Symbol(sym_t::plus),
+                unit::unit);
         tree->add(child1);
         tree->add(child2);
         return tree;
     }
     else
     {
-        auto one = std::make_shared<Symbol>(sym_t::one);
-        return std::make_shared<Tree<Symbol>>(one);
+        return std::make_shared<Tree<Symbol,unit>>(
+                Symbol(sym_t::one),
+                unit::unit);
     }
 }
 
-double evaluate(tree_ptr<Symbol> tree, double x_value)
+double evaluate(tree_ptr<Symbol,unit> tree, double x_value)
 {
-    switch(tree->get_node()->get_type())
+    switch(tree->get_node().get_type())
     {
         case sym_t::x:
             return x_value;
@@ -93,7 +98,7 @@ double evaluate(tree_ptr<Symbol> tree, double x_value)
     }
 }
 
-double fitness(tree_ptr<Symbol> tree)
+double fitness(tree_ptr<Symbol,unit> tree)
 {
     static const double target1 = 4.0;
     static const double target2 = 6.0;
@@ -105,9 +110,9 @@ double fitness(tree_ptr<Symbol> tree)
     return 1.0 / (error + 1.0);
 }
 
-unsigned int count_type(tree_ptr<Symbol> tree, sym_t type)
+unsigned int count_type(tree_ptr<Symbol,unit> tree, sym_t type)
 {
-    sym_t t = tree->get_node()->get_type();
+    sym_t t = tree->get_node().get_type();
     if(t == type)
     {
         return 1;
@@ -124,7 +129,7 @@ unsigned int count_type(tree_ptr<Symbol> tree, sym_t type)
     }
 }
 
-void pretty_print(tree_ptr<Symbol> tree)
+void pretty_print(tree_ptr<Symbol,unit> tree)
 {
     std::cout << count_type(tree, sym_t::x) << "x + "
         << count_type(tree, sym_t::one) << std::endl;
@@ -132,8 +137,8 @@ void pretty_print(tree_ptr<Symbol> tree)
 
 int main()
 {
-    Optimizer<Symbol> opt(&fitness, &random_tree, population_size);
-    tree_ptr<Symbol> best = opt.run_until_fitness(target_fitness);
+    Optimizer<Symbol,unit> opt(&fitness, &random_tree, population_size);
+    tree_ptr<Symbol,unit> best = opt.run_until_fitness(target_fitness);
     std::cout << "Best tree:" << std::endl;
     std::cout << *best << std::endl;
     pretty_print(best);

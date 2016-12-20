@@ -4,20 +4,21 @@
 #include <functional>
 #include <list>
 #include <numeric>
+#include <tuple>
 #include <random>
 #include <vector>
 
 #include "tree.hpp"
 
-template<typename T>
-using tree_ptr = std::shared_ptr<Tree<T>>;
+template<typename T, typename node_type_t>
+using tree_ptr = std::shared_ptr<Tree<T,node_type_t>>;
 
-template<typename T>
+template<typename T, typename node_type_t>
 class Optimizer
 {
     private:
-        std::function<double(tree_ptr<T>)> eval_fitness;
-        std::function<tree_ptr<T>(void)> rand_individual;
+        std::function<double(tree_ptr<T,node_type_t>)> eval_fitness;
+        std::function<tree_ptr<T,node_type_t>(void)> rand_individual;
 
         const unsigned int max_population;
 
@@ -25,7 +26,7 @@ class Optimizer
         std::mt19937 gen;
         std::uniform_real_distribution<> dis;
 
-        void populate(std::list<tree_ptr<T>> & population)
+        void populate(std::list<tree_ptr<T,node_type_t>> & population)
         {
             while(population.size() < max_population)
             {
@@ -40,11 +41,11 @@ class Optimizer
 #endif
         }
 
-        void compute_scores(std::list<tree_ptr<T>> &population,
+        void compute_scores(std::list<tree_ptr<T,node_type_t>> &population,
                             std::vector<double>    &scores)
         {
             std::vector<double> new_scores;
-            for(tree_ptr<T> tree : population)
+            for(tree_ptr<T,node_type_t> tree : population)
             {
 #ifdef VERBOSE
                 std::cout << "|" << std::flush;
@@ -57,11 +58,11 @@ class Optimizer
             scores = new_scores;
         }
 
-        void natural_selection(std::list<tree_ptr<T>> &population,
+        void natural_selection(std::list<tree_ptr<T,node_type_t>> &population,
                                std::vector<double>    &scores)
         {
             double max_score = get_best_fitness(scores);
-            std::list<tree_ptr<T>> new_population;
+            std::list<tree_ptr<T,node_type_t>> new_population;
 #ifdef VERBOSE
             std::cout << scores.size() << std::endl;
 #endif
@@ -71,7 +72,7 @@ class Optimizer
 #ifdef VERBOSE
                 std::cout << "|" << std::flush;
 #endif
-                for(tree_ptr<T> tree : population)
+                for(tree_ptr<T,node_type_t> tree : population)
                 {
                     double probability = (scores[i] + 1) / (max_score + 1);
                     if(dis(gen) < probability)
@@ -86,16 +87,27 @@ class Optimizer
             population = new_population;
         }
 
-        void _cross_over(std::list<tree_ptr<T>> &population)
+        void _cross_over(std::list<tree_ptr<T,node_type_t>> &population)
         {
             unsigned int n = population.size();
-            unsigned int ind1 = (unsigned int)(dis(gen) * n);
-            unsigned int ind2 = (unsigned int)(dis(gen) * n);
-            tree_ptr<T> tree1 = *std::next(population.begin(), ind1);
-            tree_ptr<T> tree2 = *std::next(population.begin(), ind2);
-            pos pos1 = tree1->random_position();
-            pos pos2 = tree2->random_position();
-            tree_ptr<T> subtree1, subtree2;
+            std::pair<bool,pos> result;
+            tree_ptr<T,node_type_t> tree1, tree2;
+            pos pos1, pos2;
+
+            do
+            {
+                unsigned int ind1 = (unsigned int)(dis(gen) * n);
+                unsigned int ind2 = (unsigned int)(dis(gen) * n);
+
+                tree1 = *std::next(population.begin(), ind1);
+                pos1 = tree1->random_position();
+                node_type_t type = tree1->get_subtree(pos1)->get_type();
+
+                tree2 = *std::next(population.begin(), ind2);
+                result = tree2->random_position(type);
+            } while(!result.first);
+            pos2 = result.second;
+            tree_ptr<T,node_type_t> subtree1, subtree2;
             if(pos1.size() == 0)
             {
                 if(pos2.size() == 0)
@@ -119,7 +131,7 @@ class Optimizer
             }
         }
 
-        void cross_over(std::list<tree_ptr<T>> &population)
+        void cross_over(std::list<tree_ptr<T,node_type_t>> &population)
         {
             for(unsigned int i = 0; i < 20; i++)
             {
@@ -133,7 +145,7 @@ class Optimizer
 #endif
         }
 
-        void step(std::list<tree_ptr<T>> &population,
+        void step(std::list<tree_ptr<T,node_type_t>> &population,
                   std::vector<double>    &scores)
         {
 #ifdef VERBOSE
@@ -157,7 +169,7 @@ class Optimizer
 #endif
         }
 
-        tree_ptr<T> get_best(std::list<tree_ptr<T>> &population,
+        tree_ptr<T,node_type_t> get_best(std::list<tree_ptr<T,node_type_t>> &population,
                              std::vector<double>    &scores)
         {
             auto max_score = std::max_element(scores.begin(),
@@ -172,17 +184,17 @@ class Optimizer
         }
 
     public:
-        Optimizer(std::function<double(tree_ptr<T>)> eval_fitness,
-                  std::function<tree_ptr<T>(void)> rand_individual,
+        Optimizer(std::function<double(tree_ptr<T,node_type_t>)> eval_fitness,
+                  std::function<tree_ptr<T,node_type_t>(void)> rand_individual,
                   unsigned int max_population = 100)
             : eval_fitness(eval_fitness), rand_individual(rand_individual),
             max_population(max_population),
             gen(rd()), dis(0,1)
         {}
 
-        tree_ptr<T> run(unsigned int steps = 10)
+        tree_ptr<T,node_type_t> run(unsigned int steps = 10)
         {
-            std::list<tree_ptr<T>> population;
+            std::list<tree_ptr<T,node_type_t>> population;
             std::vector<double>    scores;
             populate(population);
             compute_scores(population, scores);
@@ -195,9 +207,9 @@ class Optimizer
             return get_best(population, scores);
         }
 
-        tree_ptr<T> run_until_fitness(double target_fitness)
+        tree_ptr<T,node_type_t> run_until_fitness(double target_fitness)
         {
-            std::list<tree_ptr<T>> population;
+            std::list<tree_ptr<T,node_type_t>> population;
             std::vector<double>    scores;
             populate(population);
             compute_scores(population, scores);
