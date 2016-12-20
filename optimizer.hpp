@@ -29,11 +29,15 @@ class Optimizer
         {
             while(population.size() < max_population)
             {
+#ifdef VERBOSE
                 std::cout << "|" << std::flush;
+#endif
                 population.push_back(rand_individual());
             }
+#ifdef VERBOSE
             std::cout << std::endl << population.size() << " trees"
                 << std::endl;
+#endif
         }
 
         void compute_scores(std::list<tree_ptr<T>> &population,
@@ -42,24 +46,31 @@ class Optimizer
             std::vector<double> new_scores;
             for(tree_ptr<T> tree : population)
             {
+#ifdef VERBOSE
                 std::cout << "|" << std::flush;
+#endif
                 new_scores.push_back(eval_fitness(tree));
             }
+#ifdef VERBOSE
             std::cout << std::endl;
+#endif
             scores = new_scores;
         }
 
         void natural_selection(std::list<tree_ptr<T>> &population,
                                std::vector<double>    &scores)
         {
-            double max_score = *std::max_element(scores.begin(),
-                                                scores.end());
+            double max_score = get_best_fitness(scores);
             std::list<tree_ptr<T>> new_population;
+#ifdef VERBOSE
             std::cout << scores.size() << std::endl;
+#endif
             while(new_population.size() == 0) // In case all population dies
             {
                 unsigned int i = 0;
+#ifdef VERBOSE
                 std::cout << "|" << std::flush;
+#endif
                 for(tree_ptr<T> tree : population)
                 {
                     double probability = (scores[i] + 1) / (max_score + 1);
@@ -68,8 +79,10 @@ class Optimizer
                     i++;
                 }
             }
+#ifdef VERBOSE
             std::cout << std::endl << new_population.size() << " trees kept"
                 << std::endl;
+#endif
             population = new_population;
         }
 
@@ -110,24 +123,38 @@ class Optimizer
         {
             for(unsigned int i = 0; i < 20; i++)
             {
+#ifdef VERBOSE
                 std::cout << "|" << std::flush;
+#endif
                 _cross_over(population);
             }
+#ifdef VERBOSE
             std::cout << std::endl;
+#endif
         }
 
         void step(std::list<tree_ptr<T>> &population,
                   std::vector<double>    &scores)
         {
+#ifdef VERBOSE
             std::cout << "naturally selecting..." << std::endl;
+#endif
             natural_selection(population, scores);
+#ifdef VERBOSE
             std::cout << "crossing over..." << std::endl;
+#endif
             cross_over(population);
+#ifdef VERBOSE
             std::cout << "populating..." << std::endl;
+#endif
             populate(population);
+#ifdef VERBOSE
             std::cout << "computing scores..." << std::endl;
+#endif
             compute_scores(population, scores);
+#ifdef VERBOSE
             std::cout << std::endl;
+#endif
         }
 
         tree_ptr<T> get_best(std::list<tree_ptr<T>> &population,
@@ -161,9 +188,10 @@ class Optimizer
             compute_scores(population, scores);
             for(unsigned int i = 0; i < steps; i++)
             {
-                std::cout << "STEP " << i + 1 << std::endl;
+                std::cout << "\rSTEP " << i + 1 << std::flush;
                 step(population, scores);
             }
+            std::cout << std::endl;
             return get_best(population, scores);
         }
 
@@ -176,10 +204,11 @@ class Optimizer
             unsigned int i = 0;
             while(get_best_fitness(scores) < target_fitness)
             {
-                std::cout << "STEP " << i + 1 << std::endl;
+                std::cout << "\rSTEP " << i + 1 << std::flush;
                 step(population, scores);
                 i++;
             }
+            std::cout << std::endl;
             return get_best(population, scores);
         }
 };
