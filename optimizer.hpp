@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <functional>
 #include <list>
 #include <numeric>
@@ -27,7 +28,12 @@ class Optimizer
         void populate(std::list<tree_ptr<T>> & population)
         {
             while(population.size() < max_population)
+            {
+                std::cout << "|" << std::flush;
                 population.push_back(rand_individual());
+            }
+            std::cout << std::endl << population.size() << " trees"
+                << std::endl;
         }
 
         void compute_scores(std::list<tree_ptr<T>> &population,
@@ -35,25 +41,35 @@ class Optimizer
         {
             std::vector<double> new_scores;
             for(tree_ptr<T> tree : population)
+            {
+                std::cout << "|" << std::flush;
                 new_scores.push_back(eval_fitness(tree));
+            }
+            std::cout << std::endl;
             scores = new_scores;
         }
 
         void natural_selection(std::list<tree_ptr<T>> &population,
                                std::vector<double>    &scores)
         {
-            double total_score = std::accumulate(scores.begin(),
-                                                 scores.end(),
-                                                 0);
+            double max_score = *std::max_element(scores.begin(),
+                                                scores.end());
             std::list<tree_ptr<T>> new_population;
-            unsigned int i = 0;
-            for(tree_ptr<T> tree : population)
+            std::cout << scores.size() << std::endl;
+            while(new_population.size() == 0) // In case all population dies
             {
-                double probability = scores[i] / total_score;
-                if(dis(gen) >= probability)
-                    new_population.push_back(tree);
-                i++;
+                unsigned int i = 0;
+                std::cout << "|" << std::flush;
+                for(tree_ptr<T> tree : population)
+                {
+                    double probability = (scores[i] + 1) / (max_score + 1);
+                    if(dis(gen) < probability)
+                        new_population.push_back(tree);
+                    i++;
+                }
             }
+            std::cout << std::endl << new_population.size() << " trees kept"
+                << std::endl;
             population = new_population;
         }
 
@@ -93,16 +109,34 @@ class Optimizer
         void cross_over(std::list<tree_ptr<T>> &population)
         {
             for(unsigned int i = 0; i < 20; i++)
+            {
+                std::cout << "|" << std::flush;
                 _cross_over(population);
+            }
+            std::cout << std::endl;
         }
 
         void step(std::list<tree_ptr<T>> &population,
                   std::vector<double>    &scores)
         {
+            std::cout << "populating..." << std::endl;
             populate(population);
+            std::cout << "computing scores..." << std::endl;
             compute_scores(population, scores);
+            std::cout << "naturally selecting..." << std::endl;
             natural_selection(population, scores);
+            std::cout << "crossing over..." << std::endl;
             cross_over(population);
+            std::cout << std::endl;
+        }
+
+        tree_ptr<T> get_best(std::list<tree_ptr<T>> &population,
+                             std::vector<double>    &scores)
+        {
+            auto max_score = std::max_element(scores.begin(),
+                                              scores.end());
+            unsigned int index = std::distance(scores.begin(), max_score);
+            return *std::next(population.begin(), index);
         }
 
     public:
@@ -114,15 +148,19 @@ class Optimizer
             gen(rd()), dis(0,1)
         {}
 
-        void run()
+        tree_ptr<T> run(unsigned int steps = 10)
         {
             std::list<tree_ptr<T>> population;
             std::vector<double>    scores;
-            for(unsigned int i = 0; i < 2; i++)
+            for(unsigned int i = 0; i < (steps - 1); i++)
             {
-                std::cout << "STEP " << i << std::endl;
+                std::cout << "STEP " << i + 1 << std::endl;
                 step(population, scores);
             }
+            std::cout << "STEP " << steps << std::endl;
+            populate(population);
+            compute_scores(population, scores);
+            return get_best(population, scores);
         }
 };
 

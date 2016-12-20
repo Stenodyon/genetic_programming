@@ -13,8 +13,8 @@ template<typename T>
 class Tree
 {
     private:
-        std::shared_ptr<T> node;
-        std::vector<std::shared_ptr<Tree<T>>> children;
+        std::shared_ptr<T> node; // T value of that node
+        std::vector<std::shared_ptr<Tree<T>>> children; // Array of children
 
         class visitor
         {
@@ -51,6 +51,15 @@ class Tree
         Tree(std::shared_ptr<T> node,
                 std::vector<std::shared_ptr<Tree<T>>> children)
             : node(node), children(children) {}
+        Tree(const Tree<T> &copy)
+            : node(std::make_shared<T>(*(copy.node)))
+        {
+            for(auto child : copy.children)
+            {
+                auto child_copy = std::make_shared<Tree<T>>(*child);
+                children.push_back(child_copy);
+            }
+        }
 
         const std::shared_ptr<T> & get_node() const { return node; }
         const std::vector<std::shared_ptr<Tree<T>>> & get_children() const
@@ -90,7 +99,7 @@ void Tree<T>::replace(
     unsigned int i = position.front();
     if(position.size() == 1)
     {
-        children[i] = newtree;
+        children[i] = std::make_shared<Tree<T>>(*newtree);
     }
     else
     {

@@ -5,6 +5,9 @@
 #include "tree.hpp"
 #include "optimizer.hpp"
 
+const unsigned int steps = 100;
+const unsigned int population_size = 100;
+
 void print_position(pos & position)
 {
     for(unsigned int i : position)
@@ -43,13 +46,14 @@ double fitness(tree_ptr<bool> tree)
         val += fitness(children[0]);
         val += fitness(children[1]);
     }
-    std::cout << *tree << " -> " << val << std::endl;
     return val;
 }
 
 int main()
 {
-    Optimizer<bool> opt(&fitness, &random_tree, 10);
-    opt.run();
+    Optimizer<bool> opt(&fitness, &random_tree, population_size);
+    tree_ptr<bool> best = opt.run(steps);
+    std::cout << "Best tree after " << steps << " steps:" << std::endl;
+    std::cout << *best << std::endl;
     return 0;
 }
