@@ -32,12 +32,10 @@ tree_ptr<bool> random_tree()
 
 double fitness(tree_ptr<bool> tree)
 {
-    std::cout << "Computing fitness" << std::endl;
     double val = 0;
     const std::vector<tree_ptr<bool>> & children = tree->get_children();
     if(children.size() >= 2)
     {
-        std::cout << children.size() << " children" << std::endl;
         if(*(children[0]->get_node()) == false)
             val += 1;
         if(*(children[1]->get_node()) == true)
@@ -45,16 +43,12 @@ double fitness(tree_ptr<bool> tree)
         val += fitness(children[0]);
         val += fitness(children[1]);
     }
-    std::cout << "Fitness = " << val << std::endl;
+    std::cout << *tree << " -> " << val << std::endl;
     return val;
 }
 
 int main()
 {
-    auto tree = random_tree();
-    std::cout << *tree << std::endl;
-    double fit = fitness(tree);
-    std::cout << fit << std::endl;
     Optimizer<bool> opt(&fitness, &random_tree, 10);
     opt.run();
     return 0;

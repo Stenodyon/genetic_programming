@@ -33,12 +33,10 @@ class Optimizer
         void compute_scores(std::list<tree_ptr<T>> &population,
                             std::vector<double>    &scores)
         {
-            unsigned int i = 0;
+            std::vector<double> new_scores;
             for(tree_ptr<T> tree : population)
-            {
-                scores[i] = eval_fitness(tree);
-                i++;
-            }
+                new_scores.push_back(eval_fitness(tree));
+            scores = new_scores;
         }
 
         void natural_selection(std::list<tree_ptr<T>> &population,
@@ -47,14 +45,16 @@ class Optimizer
             double total_score = std::accumulate(scores.begin(),
                                                  scores.end(),
                                                  0);
+            std::list<tree_ptr<T>> new_population;
             unsigned int i = 0;
             for(tree_ptr<T> tree : population)
             {
                 double probability = scores[i] / total_score;
-                if(dis(gen) < probability)
-                    population.remove(tree);
+                if(dis(gen) >= probability)
+                    new_population.push_back(tree);
                 i++;
             }
+            population = new_population;
         }
 
         void _cross_over(std::list<tree_ptr<T>> &population)
@@ -81,7 +81,8 @@ class Optimizer
                 if(pos2.size() == 0)
                 {
                     population.push_back(subtree1);
-                    tree1->replace(tree2, pos2);
+                    tree1->replace(tree2, pos1);
+                    return;
                 }
                 subtree2 = tree2->get_subtree(pos2);
                 tree1->replace(subtree2, pos1);
@@ -115,10 +116,13 @@ class Optimizer
 
         void run()
         {
-            std::list<tree_ptr<T>> population(max_population);
-            std::vector<double>    scores(max_population);
-            for(unsigned int i = 0; i < 1; i++)
+            std::list<tree_ptr<T>> population;
+            std::vector<double>    scores;
+            for(unsigned int i = 0; i < 2; i++)
+            {
+                std::cout << "STEP " << i << std::endl;
                 step(population, scores);
+            }
         }
 };
 
