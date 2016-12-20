@@ -88,6 +88,13 @@ class Tree
             }
         }
 
+        /** Adds given children to the children of the tree
+         * \param child The child to add */
+        void add(std::shared_ptr<Tree<T>> child)
+        {
+            children.push_back(child);
+        }
+
         /** Getter for the value of type T attached to the node
          * \return A pointer to the value */
         const std::shared_ptr<T> & get_node() const { return node; }
