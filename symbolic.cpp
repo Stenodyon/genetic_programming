@@ -95,10 +95,39 @@ double evaluate(tree_ptr<Symbol> tree, double x_value)
 
 double fitness(tree_ptr<Symbol> tree)
 {
-    static const double target = 10.0;
+    static const double target1 = 4.0;
+    static const double target2 = 6.0;
     double val1 = evaluate(tree, 1.0);
-    double error = abs(val1 - target);
+    double val2 = evaluate(tree, 2.0);
+    double error1 = abs(val1 - target1);
+    double error2 = abs(val2 - target2);
+    double error = error1 + error2;
     return 1.0 / (error + 1.0);
+}
+
+unsigned int count_type(tree_ptr<Symbol> tree, sym_t type)
+{
+    sym_t t = tree->get_node()->get_type();
+    if(t == type)
+    {
+        return 1;
+    }
+    else if(t == sym_t::plus)
+    {
+        unsigned int count1 = count_type(tree->get_children()[0], type);
+        unsigned int count2 = count_type(tree->get_children()[1], type);
+        return count1 + count2;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void pretty_print(tree_ptr<Symbol> tree)
+{
+    std::cout << count_type(tree, sym_t::x) << "x + "
+        << count_type(tree, sym_t::one) << std::endl;
 }
 
 int main()
@@ -107,6 +136,7 @@ int main()
     tree_ptr<Symbol> best = opt.run_until_fitness(target_fitness);
     std::cout << "Best tree:" << std::endl;
     std::cout << *best << std::endl;
+    pretty_print(best);
     std::cout << "best(1) = " << evaluate(best, 1.0) << std::endl;
     return 0;
 }
