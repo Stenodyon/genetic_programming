@@ -101,7 +101,11 @@ class Optimizer
 
                 tree1 = *std::next(population.begin(), ind1);
                 pos1 = tree1->random_position();
-                node_type_t type = tree1->get_subtree(pos1)->get_type();
+                node_type_t type;
+                if(pos1.size() == 0)
+                    type = tree1->get_type();
+                else
+                    type = tree1->get_subtree(pos1)->get_type();
 
                 tree2 = *std::next(population.begin(), ind2);
                 result = tree2->random_position(type);

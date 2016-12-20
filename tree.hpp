@@ -236,7 +236,7 @@ std::pair<bool,pos> Tree<T,node_type_t>::random_position(node_type_t type)
 {
     reservoir_sampler<T, node_type_t> rs{type_filter<T,node_type_t>(type)};
     visit(std::ref(rs));
-    return std::pair<bool,pos>(rs.get_iterations() == 0, rs.get_position());
+    return std::pair<bool,pos>(rs.get_iterations() > 0, rs.get_position());
 }
 
 template<typename T, typename node_type_t>
