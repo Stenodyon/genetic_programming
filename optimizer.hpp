@@ -119,14 +119,14 @@ class Optimizer
         void step(std::list<tree_ptr<T>> &population,
                   std::vector<double>    &scores)
         {
-            std::cout << "populating..." << std::endl;
-            populate(population);
-            std::cout << "computing scores..." << std::endl;
-            compute_scores(population, scores);
             std::cout << "naturally selecting..." << std::endl;
             natural_selection(population, scores);
             std::cout << "crossing over..." << std::endl;
             cross_over(population);
+            std::cout << "populating..." << std::endl;
+            populate(population);
+            std::cout << "computing scores..." << std::endl;
+            compute_scores(population, scores);
             std::cout << std::endl;
         }
 
@@ -137,6 +137,11 @@ class Optimizer
                                               scores.end());
             unsigned int index = std::distance(scores.begin(), max_score);
             return *std::next(population.begin(), index);
+        }
+
+        double get_best_fitness(std::vector<double> &scores)
+        {
+            return *std::max_element(scores.begin(), scores.end());
         }
 
     public:
@@ -152,14 +157,29 @@ class Optimizer
         {
             std::list<tree_ptr<T>> population;
             std::vector<double>    scores;
-            for(unsigned int i = 0; i < (steps - 1); i++)
+            populate(population);
+            compute_scores(population, scores);
+            for(unsigned int i = 0; i < steps; i++)
             {
                 std::cout << "STEP " << i + 1 << std::endl;
                 step(population, scores);
             }
-            std::cout << "STEP " << steps << std::endl;
+            return get_best(population, scores);
+        }
+
+        tree_ptr<T> run_until_fitness(double target_fitness)
+        {
+            std::list<tree_ptr<T>> population;
+            std::vector<double>    scores;
             populate(population);
             compute_scores(population, scores);
+            unsigned int i = 0;
+            while(get_best_fitness(scores) < target_fitness)
+            {
+                std::cout << "STEP " << i + 1 << std::endl;
+                step(population, scores);
+                i++;
+            }
             return get_best(population, scores);
         }
 };

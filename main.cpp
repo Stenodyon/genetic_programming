@@ -7,6 +7,7 @@
 
 const unsigned int steps = 100;
 const unsigned int population_size = 100;
+const double target_fitness = 15.0;
 
 void print_position(pos & position)
 {
@@ -41,8 +42,12 @@ double fitness(tree_ptr<bool> tree)
     {
         if(*(children[0]->get_node()) == false)
             val += 1;
+        else
+            val -= 1;
         if(*(children[1]->get_node()) == true)
             val += 1;
+        else
+            val -= 1;
         val += fitness(children[0]);
         val += fitness(children[1]);
     }
@@ -52,8 +57,8 @@ double fitness(tree_ptr<bool> tree)
 int main()
 {
     Optimizer<bool> opt(&fitness, &random_tree, population_size);
-    tree_ptr<bool> best = opt.run(steps);
-    std::cout << "Best tree after " << steps << " steps:" << std::endl;
+    tree_ptr<bool> best = opt.run_until_fitness(target_fitness);
+    std::cout << "Best tree:" << std::endl;
     std::cout << *best << std::endl;
     return 0;
 }
