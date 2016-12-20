@@ -9,13 +9,18 @@
 const double target_fitness = 0.999;
 const unsigned int population_size = 100;
 
-enum class unit { unit };
+enum class math_type
+{
+    number,
+    boolean
+};
 
 enum class sym_t
 {
     x,
     plus,
-    one
+    one,
+    equals
 };
 
 class Symbol
@@ -41,6 +46,9 @@ class Symbol
                 case sym_t::one:
                     os << "one";
                     break;
+                case sym_t::equals:
+                    os << "==";
+                    break;
                 default:
                     break;
             }
@@ -48,7 +56,7 @@ class Symbol
         }
 };
 
-tree_ptr<Symbol,unit> random_tree()
+tree_ptr<Symbol,math_type> random_numerical_expression()
 {
     static std::random_device rd;
     static std::mt19937 gen(rd());
@@ -56,30 +64,40 @@ tree_ptr<Symbol,unit> random_tree()
     double random = dis(gen);
     if(random < 0.3)
     {
-        return std::make_shared<Tree<Symbol,unit>>(
+        return std::make_shared<Tree<Symbol,math_type>>(
                 Symbol(sym_t::x),
-                unit::unit);
+                math_type::number);
     }
     else if(random < 0.6)
     {
-        auto child1 = random_tree();
-        auto child2 = random_tree();
-        auto tree = std::make_shared<Tree<Symbol,unit>>(
+        auto child1 = random_numerical_expression();
+        auto child2 = random_numerical_expression();
+        auto tree = std::make_shared<Tree<Symbol,math_type>>(
                 Symbol(sym_t::plus),
-                unit::unit);
+                math_type::number);
         tree->add(child1);
         tree->add(child2);
         return tree;
     }
     else
     {
-        return std::make_shared<Tree<Symbol,unit>>(
+        return std::make_shared<Tree<Symbol,math_type>>(
                 Symbol(sym_t::one),
-                unit::unit);
+                math_type::number);
     }
 }
 
-double evaluate(tree_ptr<Symbol,unit> tree, double x_value)
+tree_ptr<Symbol,math_type> random_tree()
+{
+    auto tree = std::make_shared<Tree<Symbol,math_type>>(
+            Symbol(sym_t::equals),
+            math_type::boolean);
+    tree->add(random_numerical_expression());
+    tree->add(random_numerical_expression());
+    return tree;
+}
+
+double evaluate(tree_ptr<Symbol,math_type> tree, double x_value)
 {
     switch(tree->get_node().get_type())
     {
@@ -98,19 +116,21 @@ double evaluate(tree_ptr<Symbol,unit> tree, double x_value)
     }
 }
 
-double fitness(tree_ptr<Symbol,unit> tree)
+double fitness(tree_ptr<Symbol,math_type> tree)
 {
-    static const double target1 = 4.0;
-    static const double target2 = 6.0;
-    double val1 = evaluate(tree, 1.0);
-    double val2 = evaluate(tree, 2.0);
-    double error1 = abs(val1 - target1);
-    double error2 = abs(val2 - target2);
-    double error = error1 + error2;
+    double val11 = evaluate(tree->get_children()[0], 1.0);
+    double val12 = evaluate(tree->get_children()[1], 1.0);
+    double error1 = abs(val11 - val12);
+    double val21 = evaluate(tree->get_children()[0], 2.0);
+    double val22 = evaluate(tree->get_children()[1], 2.0);
+    double error2 = abs(val21 - val22);
+    double val3 = evaluate(tree->get_children()[0], 3.0);
+    double error3 = abs(val3 - 10.0);
+    double error = error1 + error2 + error3;
     return 1.0 / (error + 1.0);
 }
 
-unsigned int count_type(tree_ptr<Symbol,unit> tree, sym_t type)
+unsigned int count_type(tree_ptr<Symbol,math_type> tree, sym_t type)
 {
     sym_t t = tree->get_node().get_type();
     if(t == type)
@@ -129,19 +149,11 @@ unsigned int count_type(tree_ptr<Symbol,unit> tree, sym_t type)
     }
 }
 
-void pretty_print(tree_ptr<Symbol,unit> tree)
-{
-    std::cout << count_type(tree, sym_t::x) << "x + "
-        << count_type(tree, sym_t::one) << std::endl;
-}
-
 int main()
 {
-    Optimizer<Symbol,unit> opt(&fitness, &random_tree, population_size);
-    tree_ptr<Symbol,unit> best = opt.run_until_fitness(target_fitness);
+    Optimizer<Symbol,math_type> opt(&fitness, &random_tree, population_size);
+    tree_ptr<Symbol,math_type> best = opt.run_until_fitness(target_fitness);
     std::cout << "Best tree:" << std::endl;
     std::cout << *best << std::endl;
-    pretty_print(best);
-    std::cout << "best(1) = " << evaluate(best, 1.0) << std::endl;
     return 0;
 }
