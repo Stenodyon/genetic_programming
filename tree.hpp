@@ -14,7 +14,7 @@ typedef std::list<unsigned int> pos;
  *
  * This class represents a tree (as in a graph without cycles) with
  * values of type T attached to the nodes. */
-template<typename T, typename node_type_t>
+template<typename T, typename node_type_t = typename T::types>
 class Tree
 {
     private:

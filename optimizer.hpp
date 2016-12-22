@@ -10,10 +10,10 @@
 
 #include "tree.hpp"
 
-template<typename T, typename node_type_t>
+template<typename T, typename node_type_t = typename T::types>
 using tree_ptr = std::shared_ptr<Tree<T,node_type_t>>;
 
-template<typename T, typename node_type_t>
+template<typename T, typename node_type_t = typename T::types>
 class Optimizer
 {
     private:
